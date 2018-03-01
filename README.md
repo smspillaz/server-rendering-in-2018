@@ -1,11 +1,12 @@
 # From A to Server Rendering, 2018 edition
  -- How do I do this again?
 
- Another year, another React app to add server-side rendering support to. For the
- uninitiated, Server-Side-Rendering in the context of React is the term used to
- describe the use of React itself to do the first render pass of a web-app on the
- server and send that to the browser just before it gets the (rather large) JavaScript
- bundle for your React App. The browser can display the server-rendered page immediately and then continue running your App once it is done with the bundle.
+Another year, another React app to add server-side rendering support to. For the
+uninitiated, Server-Side-Rendering in the context of React is the term used to
+describe the use of React itself to do the first render pass of a web-app on the
+server and send that to the browser just before it gets the (rather large) JavaScript
+bundle for your React App. The browser can display the server-rendered page
+immediately and then continue running your App once it is done with the bundle.
 
 Server rendering really is one of those things where its great in theory,
 great when you actually have it working, and terrible when things are half broken
