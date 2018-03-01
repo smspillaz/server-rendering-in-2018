@@ -520,3 +520,5 @@ Obviously, its a lot easier to start from a worked example of adding server-side
 to an app and use the blog post for context. So I've done just that in my
 [react-boilerplate-serverless](https://github.com/smspillaz/react-boilerplate-serverless/commits/server-rendering)
 fork. Feel free to check it out and fork it.
+
+*Thanks to [Jack Scott](https://github.com/jackrobertscott) for reviewing a draft of this post.*
