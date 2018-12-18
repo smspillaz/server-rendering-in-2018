@@ -57,7 +57,7 @@ Also, strict `babel-node` is not solving the problem: other ReactJS libraries yo
 
 Instead, we’re going to use Webpack to build a compatible server bundle, and then run it with NodeJS. So, just change entry point to your server in Webpack config, right?
 
-```javascript
+```jsx harmony
 {
   entry: ['server/index.js']
 }
@@ -109,7 +109,7 @@ Second, Webpack is set to exclude all `node_modules` requirements from bundling.
 
 Add `target: 'node'` to Webpack configuration:
 
-```ecmascript 6
+```jsx harmony
 entry: [
   path.join(process.cwd(), 'server/index.js'),
 ],
@@ -128,7 +128,7 @@ server: true,
 #### NPM Task
 To build server bundle, add the following to your `package.json`:
 
-```json
+```json5
 "build:dev:server": "cross-env NODE_ENV=development webpack --config internals/webpack/webpack.dev.server.babel.js --color --progress",
 "build:server": "cross-env NODE_ENV=production webpack --config internals/webpack/webpack.prod.server.babel.js --color -p --progress --hide-modules --display-optimization-bailout",
 ```
@@ -223,7 +223,7 @@ If you're using `react-router` in your app to connect different pages to differe
 
 Instead, you'll need to create a `memoryHistory` object from the current request URL and inject both your redux store and and history object into your App's `<Root>` component and use those instead of the `browserHistory` on the client side.
 
-```ecmascript 6
+```jsx harmony
 import createMemoryHistory from 'history/createMemoryHistory';
 import { routerMiddleware } from 'react-router-redux';
 import { createStore, applyMiddleware, compose } from 'redux';
@@ -312,7 +312,7 @@ new HtmlWebpackPlugin({
 
 Now you can read the manifest into your server-side renderer and capture the loadables that would have been requested on the given route and preload them into `<script>` tags on the rendered page.
 
-```ecmascript 6
+```jsx harmony
 const modules = [];
 const html = ReactDOMServer.renderToString(
   <Loadable.Capture report={(moduleName) => modules.push(moduleName)}>
@@ -436,7 +436,7 @@ On client side:
 1. Read the `__SERVER_STATE` property (if exists), and
 2. Initialize the store from there:
 
-```ecmascript 6
+```jsx harmony
 const initialState = window.__SERVER_STATE || {};
 const store = configureStore(initialState);
 ```
@@ -473,6 +473,6 @@ Thankfully, that’s just a matter of making a “Webpack library” out of your
 
 To shorten your learning curve, I’ve prepped [`react-boilerplate-serverless`](https://github.com/smspillaz/react-boilerplate-serverless/commits/server-rendering), a working implementation of *server-side rendering* feature.
 
-Feel free to check out and fork it.
+Feel free to check it out and fork.
 
 *Thanks to [Jack Scott](https://github.com/jackrobertscott) for reviewing a draft of this post.*
