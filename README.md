@@ -1,3 +1,6 @@
+[![](https://img.shields.io/github/release-date/SubtitleEdit/subtitleedit.svg)](https://github.com/nifanic/server-rendering-in-2018)
+[![](https://img.shields.io/github/last-commit/google/skia.svg)](https://github.com/nifanic/server-rendering-in-2018)
+
 # Server Rendering in 2018
 
 > How do I do this again?
@@ -45,11 +48,15 @@ Done, your app has got the server rendering! Or has it?
 
 In 2018, time has marched forward, and everything is different again. But, unsurprisingly, what hasn’t changed is that adding *server-side rendering* is still a guesswork. 
 
-Let’s say, for instance, that you’re using the best practices described in a project like [react-boilerplate](https://github.com/react-boilerplate/react-boilerplate). react-boilerplate doesn’t support Server Side Rendering ([yet](https://github.com/react-boilerplate/react-boilerplate/pull/1236)), so it seems like a good place to start. As a starter project it has lots of things that a "best practices" react project might have set up, like [webpack](https://webpack.js.org/), [styled-components](https://github.com/styled-components/styled-components), [redux](http://redux.js.org/), [redux-saga](https://redux-saga.github.io/redux-saga/), [react-router](https://github.com/ReactTraining/react-router) and [react-loadable](https://github.com/jamiebuilds/react-loadable). All of those things are really handy! Unfortunately, they all require a little bit of configuration and tweaking to work with server-side rendering. Off we go, I guess.
+Let’s say, you’re using the best practices outlined in [`react-boilerplate`](https://github.com/react-boilerplate/react-boilerplate). But it doesn’t support *server side rendering* ([yet](https://github.com/react-boilerplate/react-boilerplate/pull/1236)), so it seems like a good place to start.
 
-### Chapter 1: How Exactly to Run This Server Now?
+As a starter, the project has got all the latest tools: [`webpack`](https://webpack.js.org/), [`styled-components`](https://github.com/styled-components/styled-components), [`redux`](http://redux.js.org/), [`redux-saga`](https://redux-saga.github.io/redux-saga/), [`react-router`](https://github.com/ReactTraining/react-router), [`react-loadable`](https://github.com/jamiebuilds/react-loadable), to name a few. These tools are really handy, but configuration and tweaking are required to make it working with *server-side rendering*.
 
-You’ve probably noticed that both JSX and ES6 formats are used in the server above. That’s great, and NodeJS supports a lot of ES6 stuff [natively](http://node.green/) by now. Except [imports](https://medium.com/the-node-js-collection/an-update-on-es6-modules-in-node-js-42c958b890c), which likely you’ve been using heavily. [`babel-node`](https://babeljs.io/docs/usage/cli/) to the rescue, right?
+Off we go, I guess.
+
+### 1. How Exactly to Run This Server Now?
+
+You’ve probably noticed that both JSX and ES6 formats are in use. That’s great, and NodeJS supports a lot of ES6 stuff [natively](http://node.green/) by now. Except [imports](https://medium.com/the-node-js-collection/an-update-on-es6-modules-in-node-js-42c958b890c), which likely you’ve been using heavily. [`babel-node`](https://babeljs.io/docs/usage/cli/) to the rescue, right?
 
 Not so fast: `babel-node` is really meant to be a developer-only tool as it compiles directly into memory. You [should never](https://medium.com/@Cuadraman/how-to-use-babel-for-production-5b95e7323c2f) use it for production.
 
@@ -66,7 +73,6 @@ Instead, we’re going to use Webpack to build a compatible server bundle, and t
 Not quite:
 
 ```
-. . .
 ERROR in ./node_modules/fsevents/node_modules/node-pre-gyp/lib/util/compile.js
 Module not found: Error: Can't resolve 'child_process' in 'web/react-boilerplate-serverless/node_modules/fsevents/node_modules/node-pre-gyp/lib/util'
  @ ./node_modules/fsevents/node_modules/node-pre-gyp/lib/util/compile.js 9:9-33
@@ -88,9 +94,9 @@ Module not found: Error: Can't resolve 'child_process' in 'web/react-boilerplate
  @ multi ./server/index.js
 ```
 
-The first problem is that your server probably imports ExpressJS depending on tons of internal packages and binary modules. Webpack cannot handle these, and will throw the error.
+The first problem is that your server imports ExpressJS that depends on tons of internal packages and binary modules. Webpack cannot handle these, and will throw an error.
 
-Instead, we’re setting Webpack to ignore `node_modules` for server builds. As a result, instead of all modules being inlined, corresponding webpack bundle just wraps the existing `require` statements:
+To handle this, Webpack will ignore `node_modules` for server builds. As a result, instead of all modules being inlined, corresponding webpack bundle just wraps the existing `require` statements:
 
 ```javascript
 /***/ "chalk":
@@ -122,13 +128,13 @@ output: {
 },
 
 target: 'node',
-server: true,
+server: true
 ```
 
 #### NPM Task
-To build server bundle, add the following to your `package.json`:
+To build server bundle, add these scripts to your `package.json`:
 
-```json5
+```json
 "build:dev:server": "cross-env NODE_ENV=development webpack --config internals/webpack/webpack.dev.server.babel.js --color --progress",
 "build:server": "cross-env NODE_ENV=production webpack --config internals/webpack/webpack.prod.server.babel.js --color -p --progress --hide-modules --display-optimization-bailout",
 ```
@@ -137,12 +143,13 @@ You'll notice different options for the development and production builds. (In s
 
 #### Webpack DLL
 
-Next, if you're building a [Webpack DLL](https://webpack.js.org/plugins/dll-plugin/) (like `react-boilerplate`), [exclude](https://github.com/smspillaz/react-boilerplate-serverless/commit/721b695f2e9dc81bcbf7ef82492f25daabfcd1f6) any server-only dependencies from it, as the DLL is for client.
+Next, if you’re building a [Webpack DLL](https://webpack.js.org/plugins/dll-plugin/) (like `react-boilerplate`), [exclude](https://github.com/smspillaz/react-boilerplate-serverless/commit/721b695f2e9dc81bcbf7ef82492f25daabfcd1f6) any *server-only* dependencies from it, as the DLL is for client.
 
-#### Server `DefinePlugin`
-Unfortunately, client-only modules may still be out there as it (or its dependencies) may get requested earlier.
+#### `DefinePlugin`
 
-In such cases, your React code should be divided into *server-only* and *client-only* chunks. `DefinePlugin` is the best practice to do so. I had one in my base configuration that was turned on depending on whether or not we were building for the server:
+ReactJS code should be divided into *server-only* and *client-only* chunks. `DefinePlugin` is the best practice to do so.
+
+The `__SERVER__` variable helps to separate *client-only* code from *server-only* one:
 
 ```javascript
 plugins: options.plugins.concat([new webpack.DefinePlugin({
@@ -155,31 +162,39 @@ plugins: options.plugins.concat([new webpack.DefinePlugin({
 })])
 ```
 
-In your code, you can use `__SERVER__` variable to conditionally do things depending on whether code is running on the client or the server.
+### 2. Server-Unfriendly Things to Avoid
 
-### Chapter 2: Server-Unfriendly Things to Avoid
+There are a couple of things you can’t do in your bundle for server.
 
-There's a couple of things you just can't do in your bundle if you want to run on the server.
+#### Don’t Import JSON That is Intended for Run-time
 
-#### Don’t Try And Import JSON That You Intend to Read at Runtime
+NodeJS lets you do this  with `require()`. And Webpack handles `require()` at build-time, too. These will both be blown up as no relevant loader is configured.
 
-Node lets you do this  with `require()`, but since webpack handles `require()` at build-time, this will both  blow up since you don't have the relevant loader configured, but also won't load  the JSON at runtime if it only gets generated at runtime. Instead, [change](https://github.com/smspillaz/react-boilerplate-serverless/commit/3b4f40061ac7f1b970d7add7599c25be52e85b9d)  usage of `require()` to `fs.readFileSync` or similar.
+It also won’t load JSON (unless generated) at run-time.
 
-#### Prevent Modules From Trying to Load Images or CSS Directly
+Instead, [replace](https://github.com/smspillaz/react-boilerplate-serverless/commit/3b4f40061ac7f1b970d7add7599c25be52e85b9d) `require()` with `fs.readFileSync` (or similar.)
 
-In the worst case, you might need to configure [`null-loader`](https://github.com/webpack-contrib/null-loader) to force modules that do the wrong thing to stop doing that. In better cases, you can define [environment variables](https://github.com/KyleAMathews/react-spinkit#server-side-rendering) to to tell server-friendly modules to do the right thing.
+#### Don’t Import CSS or Images Directly From Modules
 
-#### Wrap Modules That do Bad Things
+Do this with [environment variables](https://github.com/KyleAMathews/react-spinkit#server-side-rendering), or [`null-loader`](https://github.com/webpack-contrib/null-loader).
 
-In some cases, you might end up importing modules that immediately try and access browser properties on `require`. This is particularly nefarious, though it can be dealt with. [Wrap](https://github.com/smspillaz/intuitive-math/commit/91f96a1a0bfcc89424c596fbbd7e501c33fdf625) the offending module in another component which defines the relevant property to something sensible and then unsets it. You will probably also want to remove the offending module from the webpack DLL and [exclude](https://github.com/smspillaz/intuitive-math/commit/3d594f26dd98750251108ed55f121b84f79eac72) it from `webpack-node-externals` too, since external requires on the server side are immediately evaluated on load, giving you no opportunity to monkey patch the relevant properties.
+#### Wrap Modules That Do Bad Things
 
-### Chapter 3: Where Did All my Styles go?
+Some modules, on `require`, may try to access browser properties.
 
-So hopefully at this point you have *something* that server-side renders, except you get the dreaded *flash-of-unstyled-content* (aka FOUC) before client-side rendering takes over.
+To handle such modules:
 
-Turns out that if you're using styled-components, you have a little bit of extra work to do. By default styled-components uses some magic to inject `<style>` tags into the `<head>` of the DOM, except that doesn't work if you don't have a DOM when you're rendering.
+- [wrap](https://github.com/smspillaz/intuitive-math/commit/91f96a1a0bfcc89424c596fbbd7e501c33fdf625) it with another component that defines relevant property to something sensible, and then unset it, OR
 
-Luckily, styled-components has a little [helper](https://www.styled-components.com/docs/advanced#server-side-rendering) to collect up all the `<style>` tags so that you can inject them into the `<head>` of your server-rendered page yourself.
+- [exclude](https://github.com/smspillaz/intuitive-math/commit/3d594f26dd98750251108ed55f121b84f79eac72) it from *Webpack DLL* with [`webpack-node-externals`](https://www.npmjs.com/package/webpack-node-externals). External server-side requires are immediately evaluated on load, giving you no opportunity to monkey patch relevant properties.
+
+### 3. Where Have All Styles Gone?
+
+Hopefully, you have *something* rendered on server side at this point, except you get the dreaded *flash of unstyled content* ([FOUC](https://en.wikipedia.org/wiki/Flash_of_unstyled_content)) before client-side rendering takes over.
+
+If you're using `styled-components`, it magically injects `<style>` elements into `<head>`. (DOM should’ve been available at the time of injection.)
+
+`styled-components` has a [helper](https://www.styled-components.com/docs/advanced#server-side-rendering) that collects all `<style>` elements, and injects it into `<head>` of server-rendered page:
 
 ```jsx harmony
 const stylesheet = new ServerStyleSheet();
@@ -190,26 +205,27 @@ const html = ReactDOMServer.renderToString(
 );
 const styleTags = stylesheet.getStyleTags();
 
-res.status(200);
-res.send(`
-    <html>
-      <head>
-        <title>My awesome server-rendered app!</title>
-        ${styleTags}
-        <script src="/static/main.js" />
-      </head>
-      <body>
-        <div id="app">${appHTML}</div>
-      </body>
-    </html>
+res.status(200).send(`
+  <html>
+    <head>
+      <title>My awesome server-rendered app!</title>
+      ${styleTags}
+      <script src="/static/main.js" />
+    </head>
+    <body>
+      <div id="app">${appHTML}</div>
+    </body>
+  </html>
 `);
 ```
 
-#### Dependencies Styled-components Version Pinning
+#### Pinned Old Dependencies and `styled-components`
 
-Unfortunately, life isn’t that simple. *Server-Side Rendering* support was only introduced in `styled-components` 2.0.0. If one of your dependencies has a pinned dependency on an older version, then they won't be collected as part of the style tags, since the version of `styled-components` it uses won’t know to insert those style tags into the intermediate component that `collectStyles` creates.
+`styled-components` supports *server-side rendering* since version 2.0.0.
 
-Thankfully, `npm` doesn't make this too hard. With the `resolutions` attribute you can force all installations of a dependency to be a particular version:
+If some dependencies have been pinned to its older versions, it won’t be collected into array of `<style>` elements by `styled-components`: its older version simply doesn’t know how to insert those `<style>` elements into intermediate component created by `collectStyles`.
+
+Thankfully, with NPM’s `resolutions` attribute, versions of installed dependencies can be specified:
 
 ```json
 "resolutions": {
@@ -217,11 +233,15 @@ Thankfully, `npm` doesn't make this too hard. With the `resolutions` attribute y
 }
 ```
 
-### Chapter 4: Server-side Routing
+### 4. Server-Side Routing
 
-If you're using `react-router` in your app to connect different pages to different routes in the URL bar then there's slightly different configurations you'll need to apply in the server-side case. If you only support client side rendering, you probably have a `browserHistory` object connected to your redux store and you have `ConnectedRouter` using that history. Since that depends on browser-only properties, that obviously won't work on the server side.
+If `react-router` is used, then there are slightly different configurations you need to apply in server-side case.
 
-Instead, you'll need to create a `memoryHistory` object from the current request URL and inject both your redux store and and history object into your App's `<Root>` component and use those instead of the `browserHistory` on the client side.
+For client-side rendering only, you have a `browserHistory` object connected to your Redux `store`, and `ConnectedRouter` using that history. Since it depends on browser properties, it obviously won’t work on server.
+
+For server-side rendering,
+1. create `memoryHistory` object from the current request URL, and
+2. inject both Redux `store` and `history` objects into your `<Root>` component. Use these instead of `browserHistory` on client side.
 
 ```jsx harmony
 import createMemoryHistory from 'history/createMemoryHistory';
@@ -249,10 +269,11 @@ configureStore = (initialState = {}, history) => {
   return store;
 }
 
-...
+. . .
 
 const memoryHistory = createMemoryHistory(req.url);
 memoryHistory.push(req.originalUrl);
+
 const store = configureStore({}, memoryHistory);
 
 const html = ReactDOMServer.renderToString(
@@ -260,25 +281,27 @@ const html = ReactDOMServer.renderToString(
 );
 ```
 
-### Chapter 5: None of my Loadables are Visible
+### 5. “None of my Loadables are Visible”
 
-Using `react-loadable` on the client side is a great way to speed up page loads by asynchronously loading expensive parts of your app once the 'shell' is loaded. On the server side that's not so useful since all that happens is that a pointless asycnhronous request gets fired on the server side which and by the time it resolves you've already rendered and it is too late.
+Using `react-loadable` on client side is a great way to speed up page loading: it’s asynchronously loading expensive parts of your app once the “shell” is loaded.
 
-Instead, what you can do is to collect up the loadables into separate script tags and ship them to the client on the server-side render. Unfortunately, this is not quite as simple as it looks—there’s a few things that need to be done here in order to make this work.
+On server side, it’s not useful since all that happens is that a pointless asycnhronous request gets fired on the server side which and by the time it resolves you've already rendered and it is too late.
+
+Instead, what you can do is to collect up the loadables into separate `script` elements and ship them to the client on the server-side render. Unfortunately, this is not quite as simple as it looks—there’s a few things that need to be done here in order to make this work.
 
 #### Babel Plugin
 
-First, [add](https://github.com/smspillaz/react-boilerplate-serverless/commit/b34e303d0ddba620eb478ec44acc37e3a13f3400) the `react-loadable/babel` plugin to your babel plugins:
+Add [`react-loadable/babel`](https://github.com/smspillaz/react-boilerplate-serverless/commit/b34e303d0ddba620eb478ec44acc37e3a13f3400) to your `.babelrc`:
 
 ```json
-    "plugins": [
-      "react-loadable/babel"
-    ],
+"plugins": [
+  "react-loadable/babel"
+]
 ```
 
 #### Webpack Plugin
 
-Then, [use](https://github.com/smspillaz/react-boilerplate-serverless/commit/045fa12305f31c9c55f2d04c1d09164b0089c0c4) the `ReactLoadablePlugin` on your client-side Webpack build config to generate a manifest of Webpack chunks corresponding to each module. We'll read this file on the server side to inject script tags for your loadables.
+Use [`ReactLoadablePlugin`](https://github.com/smspillaz/react-boilerplate-serverless/commit/045fa12305f31c9c55f2d04c1d09164b0089c0c4) in your client-side Webpack build config to generate a manifest of Webpack chunks corresponding to each module. We'll read this file on the server side to inject `script` tags for your loadables.
 
 `ModulesConcatenationPlugin`
 
@@ -286,7 +309,7 @@ As of March 1st, 2018, `react-loadable` hasn’t been fixed the compatibility is
 
 #### Split Out Manifest Bootstrap
 
-Since we'll be preloading the chunks before your main manifest, we'll need to preload the Webpack manifest bootstrap code before preloading those chunks! That's easily done by using `CommonChunksPlugin` in your client Webpack config (note that.)
+Since we'll be preloading the chunks before your main manifest, we'll need to preload the Webpack manifest bootstrap code before preloading those chunks! This can easily be done with `CommonChunksPlugin` in your client Webpack config (note that.)
 
 ```javascript
 new webpack.optimize.CommonsChunkPlugin({
@@ -308,7 +331,7 @@ new HtmlWebpackPlugin({
 })
 ```
 
-#### Server Side Renderer
+#### Server-Side Renderer
 
 Now you can read the manifest into your server-side renderer and capture the loadables that would have been requested on the given route and preload them into `<script>` tags on the rendered page.
 
@@ -342,9 +365,9 @@ fs.readFile('./build/react-loadable.json', 'utf-8', (statsErr, statsData) => {
 });
 ```
 
-#### Client Side: `preloadReady`
+#### Client Side `preloadReady`
 
-You'll also want to prevent the client side from doing any rendering until all the bundles are preloaded:
+Prevent client side from  any renderings until all bundles are pre-loaded:
 
 ```javascript
 Loadable.preloadReady().then(() => {
@@ -355,9 +378,9 @@ Loadable.preloadReady().then(() => {
 });
 ```
 
-### Chapter 6: Running your redux-sagas before rendering
+### 6. Running Your `redux-sagas` Before Rendering
 
-Usually when your components mount there's a bunch of data you might want to immediately start fetching from the server. *If* it is cheap to do so, it might be beneficial for you to do some of that work on the server to avoid a roundtrip. To do that, you'll want to wait for your redux sagas to complete until rendering the final result.
+Usually, when components are mounted, there's a bunch of data you might want to immediately start fetching from the server. *If* it is cheap to do so, it might be beneficial for you to do some of that work on the server to avoid a round trip. To do that, you'll want to wait for your Redux sagas to complete until final result is rendered.
 
 The gist of what will happen here is that we'll kick off a render of your application, run any sagas which need to be run, dispatch a special `END` event, which causes the saga generators to terminate, then render your application again, this time with an updated redux store containing pre-filled data.
 
@@ -399,7 +422,7 @@ store.runSagas(sagas).then(() => {
 });
 ```
 
-### Chapter 7: Redux State Hydration
+### 7. Redux State Hydration
 
 As of now, content on the page has been rendered, except the server side one.
 
@@ -414,8 +437,7 @@ const stateHydrationHTML = (
   `<script>window.__SERVER_STATE = ${JSON.stringify(store.getState())}</script>`
 );
 
-res.status(200);
-res.send(`
+res.status(200).send(`
   <html>
     <head>
       <title>My awesome server-rendered app!</title>
@@ -431,8 +453,6 @@ res.send(`
 
 #### Client Side
 
-On client side:
-
 1. Read the `__SERVER_STATE` property (if exists), and
 2. Initialize the store from there:
 
@@ -441,7 +461,7 @@ const initialState = window.__SERVER_STATE || {};
 const store = configureStore(initialState);
 ```
 
-### Chapter 8: Serverless
+### 8. Serverless
 
 If you’re building a [server-side serverless](https://smspillaz.wordpress.com/2017/11/19/serverless-react-boilerplate/)   ReactJS app, you need to create a Webpack bundle for the serverless deployment, too.
 
@@ -465,7 +485,6 @@ Thankfully, that’s just a matter of making a “Webpack library” out of your
   },
 
   target: 'node'
-  . . . 
 }
 ```
 
